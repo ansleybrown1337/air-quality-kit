@@ -12,6 +12,7 @@ SYSTEM_THREAD(ENABLED);
 #include "Adafruit_BME280.h"
 #include "SeeedOLED.h"
 #include "JsonParserGeneratorRK.h"
+#include "Ubidots.h"
 
 #define AQS_PIN A2
 #define DUST_SENSOR_PIN D4
@@ -64,6 +65,8 @@ void setup()
   SeeedOled.putString("Air Quality");
   SeeedOled.setTextXY(4, 0);
   SeeedOled.putString("Monitor");
+  SeeedOled.setTextXY(5, 0);
+  SeeedOled.putString("AJ's Mod");
 
   if (bme.begin())
   {
@@ -162,6 +165,7 @@ void getDustSensorReadings()
 
 void createEventPayload(int temp, int humidity, int pressure, String airQuality)
 {
+  unsigned long timeStampValue = Time.now(); // create timestamp variable
   JsonWriterStatic<256> jw;
   {
     JsonWriterAutoObject obj(&jw);
@@ -170,16 +174,23 @@ void createEventPayload(int temp, int humidity, int pressure, String airQuality)
     jw.insertKeyValue("humidity", humidity);
     jw.insertKeyValue("pressure", pressure);
     jw.insertKeyValue("air-quality", airQuality);
+    jw.insertKeyValue("dust-lpo", lowpulseoccupancy);
+    jw.insertKeyValue("dust-ratio", ratio);
+    jw.insertKeyValue("dust-concentration", concentration);
+    jw.insertKeyValue("timestamp", timeStampValue);
 
+   /*
+    // commented out b/c we want all variables sent even if it's zero
     if (lowpulseoccupancy > 0)
     {
       jw.insertKeyValue("dust-lpo", lowpulseoccupancy);
       jw.insertKeyValue("dust-ratio", ratio);
       jw.insertKeyValue("dust-concentration", concentration);
     }
+    */
   }
 
-  Particle.publish("env-vals", jw.getBuffer(), PRIVATE);
+  Particle.publish("AirQuality_v1", jw.getBuffer(), PRIVATE);
 }
 
 void updateDisplay(int temp, int humidity, int pressure, String airQuality)
@@ -204,6 +215,16 @@ void updateDisplay(int temp, int humidity, int pressure, String airQuality)
   SeeedOled.putNumber(pressure);
   SeeedOled.putString(" hPa");
 
+  SeeedOled.setTextXY(5, 0);
+  SeeedOled.putString("Dust: ");
+  SeeedOled.putNumber(concentration); // Will cast our float to an int to make it more compact
+  SeeedOled.putString(" pcs/L");
+
+  SeeedOled.setTextXY(6, 3);
+  SeeedOled.putString("--By AJB--");
+
+ /*
+  // commented out b/c we want dust to always display
   if (concentration > 1)
   {
     SeeedOled.setTextXY(5, 0);
@@ -211,4 +232,5 @@ void updateDisplay(int temp, int humidity, int pressure, String airQuality)
     SeeedOled.putNumber(concentration); // Will cast our float to an int to make it more compact
     SeeedOled.putString(" pcs/L");
   }
+  */
 }
