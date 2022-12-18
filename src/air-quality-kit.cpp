@@ -12,7 +12,6 @@ SYSTEM_THREAD(ENABLED);
 #include "Adafruit_BME280.h"
 #include "SeeedOLED.h"
 #include "JsonParserGeneratorRK.h"
-#include "Ubidots.h"
 
 #define AQS_PIN A2
 #define DUST_SENSOR_PIN D4
